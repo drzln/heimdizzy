@@ -1,7 +1,7 @@
 {
   "name": "heimdizzy",
   "version": "0.1.0",
-  "description": "Universal deployment tool for Lambda and container services",
+  "description": "Universal deployment tool for the nexus",
   "type": "module",
   "keywords": [
     "deployment",
@@ -16,12 +16,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/heimdizzy/heimdizzy.git"
+    "url": "https://github.com/drzln/heimdizzy.git"
   },
   "bugs": {
-    "url": "https://github.com/heimdizzy/heimdizzy/issues"
+    "url": "https://github.com/drzln/heimdizzy/issues"
   },
-  "homepage": "https://github.com/heimdizzy/heimdizzy#readme",
+  "homepage": "https://github.com/drzln/heimdizzy#readme",
   "engines": {
     "node": ">=18.0.0"
   },
