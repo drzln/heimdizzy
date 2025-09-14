@@ -63,6 +63,8 @@ heimdizzy deploy staging
 - **lambda**: AWS Lambda functions
 - **web**: Static web applications
 - **hybrid**: Mixed deployment types
+- **npm**: NPM package publishing
+- **dockerhub**: Docker Hub image publishing
 
 ### Build Configuration
 

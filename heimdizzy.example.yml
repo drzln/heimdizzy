@@ -136,3 +136,61 @@ deployments:
     storage:
       bucket: production-deployment-bucket
       region: us-east-1
+
+  # NPM Package Publishing Example
+  - name: npm-publish
+    environment: production
+    deployment:
+      type: npm
+      npm:
+        registry: https://registry.npmjs.org/
+        access: public
+        tag: latest
+        # token: Will use NPM_TOKEN environment variable
+    
+    storage:
+      bucket: npm-artifacts-bucket
+      region: us-east-1
+    
+    hooks:
+      pre_deploy:
+        - name: run-tests
+          description: Run tests before publishing
+          command: npm test
+        - name: build-package
+          description: Build the package
+          command: npm run build
+
+  # Docker Hub Publishing Example
+  - name: dockerhub-publish
+    environment: production
+    deployment:
+      type: dockerhub
+      dockerhub:
+        repository: myusername/myapp
+        tag: latest
+        tags:
+          - v1.0.0
+          - stable
+        dockerfile: Dockerfile
+        platform:
+          - linux/amd64
+          - linux/arm64
+        buildArgs:
+          NODE_VERSION: "18"
+        # username: Will use DOCKER_USERNAME environment variable
+        # password: Will use DOCKER_PASSWORD environment variable
+    
+    storage:
+      bucket: docker-artifacts-bucket
+      region: us-east-1
+    
+    hooks:
+      pre_build:
+        - name: lint-dockerfile
+          description: Lint the Dockerfile
+          command: hadolint Dockerfile
+      post_deploy:
+        - name: scan-image
+          description: Scan the pushed image for vulnerabilities
+          command: docker scout cves myusername/myapp:latest

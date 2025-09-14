@@ -102,15 +102,37 @@ export const ContainerDeploymentConfigSchema = z.object({
   gitops: z.boolean().default(true).describe('Use GitOps deployment pattern (recommended)')
 })
 
+export const NpmDeploymentConfigSchema = z.object({
+  registry: z.string().default('https://registry.npmjs.org/').describe('NPM registry URL'),
+  access: z.enum(['public', 'restricted']).default('public').describe('Package access level'),
+  tag: z.string().default('latest').describe('NPM publish tag'),
+  dryRun: z.boolean().default(false).describe('Perform dry run without publishing'),
+  otp: z.string().optional().describe('One-time password for 2FA'),
+  token: z.string().optional().describe('NPM auth token (defaults to NPM_TOKEN env var)')
+})
+
+export const DockerHubDeploymentConfigSchema = z.object({
+  repository: z.string().describe('Docker Hub repository (e.g., username/imagename)'),
+  tag: z.string().default('latest').describe('Docker image tag'),
+  tags: z.array(z.string()).optional().describe('Additional tags to apply'),
+  username: z.string().optional().describe('Docker Hub username (defaults to DOCKER_USERNAME env var)'),
+  password: z.string().optional().describe('Docker Hub password (defaults to DOCKER_PASSWORD env var)'),
+  dockerfile: z.string().default('Dockerfile').describe('Path to Dockerfile'),
+  buildArgs: z.record(z.string()).optional().describe('Docker build arguments'),
+  platform: z.array(z.string()).default(['linux/amd64']).describe('Target platforms for multi-platform builds')
+})
+
 export const DeploymentSchema = z.object({
-  type: z.enum(['lambda-zip', 'container', 'web']).default('lambda-zip'),
+  type: z.enum(['lambda-zip', 'container', 'web', 'npm', 'dockerhub']).default('lambda-zip'),
   runtime: z.enum(['rust', 'nodejs', 'python', 'go']).default('rust'),
   artifact: z.object({
     key: z.string().optional(),
     metadata: z.record(z.string()).optional()
   }).optional(),
   web: WebDeploymentConfigSchema.optional().describe('Web-specific deployment configuration'),
-  container: ContainerDeploymentConfigSchema.optional().describe('Container-specific deployment configuration')
+  container: ContainerDeploymentConfigSchema.optional().describe('Container-specific deployment configuration'),
+  npm: NpmDeploymentConfigSchema.optional().describe('NPM-specific deployment configuration'),
+  dockerhub: DockerHubDeploymentConfigSchema.optional().describe('Docker Hub-specific deployment configuration')
 })
 
 export const HookSchema = z.object({
@@ -160,7 +182,7 @@ export const HeimdizzyConfigSchema = z.object({
   version: z.literal('1.0'),
   service: z.object({
     name: z.string(),
-    type: z.enum(['lambda', 'container', 'hybrid', 'web']).default('lambda'),
+    type: z.enum(['lambda', 'container', 'hybrid', 'web', 'npm', 'dockerhub']).default('lambda'),
     product: z.string().optional().describe('Product this service is deployed for'),
     category: z.string().optional().describe('Service category (e.g., infrastructure, core, auth)')
   }),
@@ -183,5 +205,7 @@ export type SqlxConfig = z.infer<typeof SqlxConfigSchema>
 export type BuildConfig = z.infer<typeof BuildConfigSchema>
 export type DeploymentConfig = z.infer<typeof DeploymentSchema>
 export type WebDeploymentConfig = z.infer<typeof WebDeploymentConfigSchema>
+export type NpmDeploymentConfig = z.infer<typeof NpmDeploymentConfigSchema>
+export type DockerHubDeploymentConfig = z.infer<typeof DockerHubDeploymentConfigSchema>
 export type Hook = z.infer<typeof HookSchema>
 export type Hooks = z.infer<typeof HooksSchema>

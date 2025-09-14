@@ -3,6 +3,8 @@ import chalk from 'chalk'
 import { WebDeploymentService } from './web-deployment.js'
 import { ContainerDeploymentService, ContainerDeploymentResult } from './container-deployment.js'
 import { GitOpsContainerDeploymentService, GitOpsContainerDeploymentResult } from './gitops-container-deployment.js'
+import { NpmDeploymentService } from './npm-deployment.js'
+import { DockerHubDeploymentService } from './dockerhub-deployment.js'
 import { HooksService } from './hooks.js'
 import { Hooks } from '../config/schema.js'
 
@@ -15,12 +17,28 @@ export interface DeploymentResult {
   buildTime?: number
   deployTime?: number
   container?: ContainerDeploymentResult
+  npm?: {
+    packageName: string
+    version: string
+    registry: string
+    tag: string
+    published: boolean
+  }
+  dockerhub?: {
+    repository: string
+    tag: string
+    additionalTags: string[]
+    pushed: boolean
+    imageName: string
+  }
 }
 
 export class DeploymentService {
   private webDeploymentService = new WebDeploymentService()
   private containerDeploymentService = new ContainerDeploymentService()
   private gitOpsContainerDeploymentService = new GitOpsContainerDeploymentService()
+  private npmDeploymentService = new NpmDeploymentService()
+  private dockerHubDeploymentService = new DockerHubDeploymentService()
   private hooksService = new HooksService()
 
   async deploy(
@@ -43,6 +61,14 @@ export class DeploymentService {
     
     if (deployment.type === 'container') {
       return this.deployContainer(service, deployment, gitHash || 'latest', dryRun, deploymentConfig.hooks, deploymentConfig, fullConfig)
+    }
+    
+    if (deployment.type === 'npm') {
+      return this.deployNpm(service, deployment, fullConfig?.global?.projectRoot, dryRun, hooks)
+    }
+    
+    if (deployment.type === 'dockerhub') {
+      return this.deployDockerHub(service, deployment, fullConfig?.global?.projectRoot, gitHash || 'latest', dryRun, hooks)
     }
     
     if (deployment.type === 'lambda-zip' && deploymentConfig.environment === 'staging') {
@@ -112,6 +138,96 @@ export class DeploymentService {
         podCount: containerResult.podCount,
         container: containerResult
       }
+    }
+  }
+
+  private async deployNpm(
+    service: any,
+    deployment: any,
+    projectRoot: string | undefined,
+    dryRun: boolean,
+    hooks?: Hooks
+  ): Promise<DeploymentResult> {
+    console.log(chalk.blue(`📦 Starting NPM deployment for ${service.name}`))
+    
+    if (!deployment.npm) {
+      throw new Error('NPM deployment configuration is required for npm deploy type')
+    }
+    
+    if (!projectRoot) {
+      throw new Error('Project root is required for NPM deployment')
+    }
+    
+    // Execute pre-deployment hooks
+    if (hooks?.pre_deploy) {
+      await this.hooksService.executeHooks(hooks.pre_deploy, 'pre-deployment')
+    }
+    
+    const npmResult = await this.npmDeploymentService.deploy(
+      service,
+      deployment.npm,
+      projectRoot,
+      dryRun
+    )
+    
+    // Execute post-deployment hooks
+    if (hooks?.post_deploy) {
+      await this.hooksService.executeHooks(hooks.post_deploy, 'post-deployment')
+    }
+    
+    return {
+      npm: npmResult
+    }
+  }
+
+  private async deployDockerHub(
+    service: any,
+    deployment: any,
+    projectRoot: string | undefined,
+    gitHash: string,
+    dryRun: boolean,
+    hooks?: Hooks
+  ): Promise<DeploymentResult> {
+    console.log(chalk.blue(`🐳 Starting Docker Hub deployment for ${service.name}`))
+    
+    if (!deployment.dockerhub) {
+      throw new Error('Docker Hub deployment configuration is required for dockerhub deploy type')
+    }
+    
+    if (!projectRoot) {
+      throw new Error('Project root is required for Docker Hub deployment')
+    }
+    
+    // Execute pre-build hooks
+    if (hooks?.pre_build) {
+      await this.hooksService.executeHooks(hooks.pre_build, 'pre-build')
+    }
+    
+    // Execute post-build hooks before push
+    if (hooks?.post_build) {
+      await this.hooksService.executeHooks(hooks.post_build, 'post-build')
+    }
+    
+    // Execute pre-deployment hooks
+    if (hooks?.pre_deploy) {
+      await this.hooksService.executeHooks(hooks.pre_deploy, 'pre-deployment')
+    }
+    
+    const dockerhubResult = await this.dockerHubDeploymentService.deploy(
+      service,
+      deployment.dockerhub,
+      projectRoot,
+      gitHash,
+      dryRun
+    )
+    
+    // Execute post-deployment hooks
+    if (hooks?.post_deploy) {
+      await this.hooksService.executeHooks(hooks.post_deploy, 'post-deployment')
+    }
+    
+    return {
+      dockerhub: dockerhubResult
     }
   }
 

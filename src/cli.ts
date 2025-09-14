@@ -112,7 +112,8 @@ program
       // Build
       let buildService: BuildService | null = null
       let buildResult: any = null
-      if (!options.skipBuild && config.build && deploymentConfig.deployment.type !== 'web' && deploymentConfig.deployment.type !== 'container') {
+      const skipBuildTypes = ['web', 'container', 'npm', 'dockerhub']
+      if (!options.skipBuild && config.build && !skipBuildTypes.includes(deploymentConfig.deployment.type)) {
         const buildStartTime = Date.now()
         await notify('buildStart', `Building ${config.service.name} with Docker`)
         
@@ -136,7 +137,8 @@ program
       
       // Upload
       let artifactPath: string | undefined
-      if (!options.skipUpload && deploymentConfig.deployment.type !== 'web' && deploymentConfig.deployment.type !== 'container') {
+      const skipUploadTypes = ['web', 'container', 'npm', 'dockerhub']
+      if (!options.skipUpload && !skipUploadTypes.includes(deploymentConfig.deployment.type)) {
         const uploadStartTime = Date.now()
         await notify('uploadStart', `Uploading artifacts for ${config.service.name}`)
         
