@@ -134,6 +134,41 @@ heimdizzy deploy staging --product product-a
 heimdizzy deploy staging --product product-b
 ```
 
+### NPM Publishing
+
+Publish packages to NPM registries:
+
+```yaml
+deployment:
+  type: npm
+  npm:
+    registry: https://registry.npmjs.org/
+    access: public  # or 'restricted'
+    tag: latest
+    # token: provided via NPM_TOKEN env var
+```
+
+### Docker Hub Publishing
+
+Publish multi-platform images to Docker Hub:
+
+```yaml
+deployment:
+  type: dockerhub
+  dockerhub:
+    repository: username/imagename
+    tags:
+      - latest
+      - v1.0.0
+    platform:
+      - linux/amd64
+      - linux/arm64
+    dockerfile: Dockerfile
+    buildArgs:
+      NODE_VERSION: "18"
+    # credentials via DOCKER_USERNAME and DOCKER_PASSWORD env vars
+```
+
 ## Commands
 
 ### deploy
