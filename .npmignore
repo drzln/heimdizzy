@@ -1,0 +1,51 @@
+# Source files
+src/
+*.ts
+!*.d.ts
+
+# Configuration files
+.env
+.env.*
+heimdizzy.yml
+!heimdizzy.example.yml
+
+# Development files
+.gitignore
+.npmignore
+tsconfig.json
+vitest.config.ts
+build.ts
+
+# Documentation source
+docs/
+
+# Test files
+test/
+tests/
+*.test.ts
+*.spec.ts
+coverage/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Build artifacts
+target/
+.sqlx/

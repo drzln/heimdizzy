@@ -1,0 +1,138 @@
+version: "1.0"
+service:
+  name: example-service
+  type: container
+  product: myproduct
+  category: infrastructure
+
+# Global configuration options (optional)
+global:
+  projectRoot: /home/user/my-project  # Defaults to auto-detection from git
+  kubectlPath: /usr/local/bin/kubectl # Defaults to kubectl in PATH
+  gitOpsBasePath: k8s/clusters/main # Base path for GitOps manifests
+  clusterName: main # Kubernetes cluster name
+
+# Build configuration (optional for container deployments)
+build:
+  dockerfile: Dockerfile.deploy # Path to Dockerfile
+  target: production # Docker build target stage
+  platform: x86_64
+  useDocker: true
+  cleanupContainer: true
+
+deployments:
+  - name: example-staging
+    environment: staging
+    # Override build configuration for this deployment
+    build:
+      dockerfile: Dockerfile.staging.deploy
+    
+    # Container registry configuration
+    deployment:
+      type: container
+      container:
+        registry:
+          endpoint: docker-registry.container-registry.svc.cluster.local:5000
+          repository: example-service
+          tag: latest
+          insecure: false
+          nodePort: 30500 # Optional: specify NodePort for in-cluster registry push
+          namespace: container-registry # Registry namespace
+        
+        kubernetes:
+          namespace: infrastructure # Required - no default
+          replicas: 2
+          resources:
+            requests:
+              memory: 256Mi
+              cpu: 100m
+            limits:
+              memory: 512Mi
+              cpu: 300m
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: ENVIRONMENT
+              value: staging
+          useExistingManifests: true
+          gitOpsPath: custom/path/to/manifests # Optional: custom path for manifests
+          deploymentTimeout: 600 # Deployment rollout timeout in seconds
+          fluxNamespace: flux-system # FluxCD namespace for GitOps
+        
+        gitops: true # Use GitOps deployment pattern (recommended)
+    
+    # Hooks (optional)
+    hooks:
+      pre_build:
+        - name: prepare-dependencies
+          description: Install dependencies
+          command: npm install
+      post_build:
+        - name: tag-image
+          description: Tag image with git hash
+          command: echo "Image built successfully"
+      pre_deploy:
+        - name: validate-config
+          description: Validate configuration
+          command: kubectl auth can-i create pods -n infrastructure
+      post_deploy:
+        - name: health-check
+          description: Check deployment health
+          command: kubectl get pods -n infrastructure -l app=example-service
+    
+    # Storage configuration for artifacts
+    storage:
+      bucket: my-deployment-bucket
+      region: us-east-1
+      endpoint: https://minio.example.com
+      forcePathStyle: true
+    
+    # Notifications (optional)
+    notifications:
+      webhook: https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+      enabled: true
+      rateLimitDelay: 2000
+      events:
+        deployStart: true
+        deploySuccess: true
+        deployError: true
+        buildStart: true
+        buildSuccess: true
+        buildSkipped: false
+        uploadStart: false
+        uploadSuccess: false
+        uploadSkipped: false
+        podsRestarting: true
+        podsReady: true
+        cleanup: false
+        dryRun: true
+
+  - name: example-production
+    environment: production
+    build:
+      dockerfile: Dockerfile.production.deploy
+    
+    deployment:
+      type: container
+      container:
+        registry:
+          endpoint: my-production-registry.example.com
+          repository: example-service
+          tag: stable
+        
+        kubernetes:
+          namespace: production
+          replicas: 4
+          resources:
+            requests:
+              memory: 512Mi
+              cpu: 200m
+            limits:
+              memory: 1Gi
+              cpu: 500m
+          deploymentTimeout: 900
+    
+    storage:
+      bucket: production-deployment-bucket
+      region: us-east-1
