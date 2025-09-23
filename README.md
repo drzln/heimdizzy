@@ -2,6 +2,8 @@
 
 A powerful deployment tool for container-based services with built-in support for Kubernetes, GitOps, and advanced Rust tooling.
 
+**📢 Note: Heimdizzy is now primarily used through GitHub Actions workflows for automated deployments. For new services, use the [GitHub Actions templates](../../../.github/README.md) instead of manual CLI deployment.**
+
 ## Features
 
 - 🚀 **Multi-environment deployments** - Development, staging, and production
@@ -20,6 +22,25 @@ npm install heimdizzy
 ```
 
 ## Quick Start
+
+### Recommended: GitHub Actions Deployment
+
+1. **Set up automated deployment:**
+   ```bash
+   # Copy workflow template
+   cp .github/workflows/service-deploy-template.yml \
+      .github/workflows/my-service-deploy.yml
+   
+   # Update service name and paths in the workflow
+   ```
+
+2. **Deploy automatically:**
+   ```bash
+   git push origin main      # → Production deployment
+   git push origin develop   # → Staging deployment
+   ```
+
+### Legacy: Manual CLI Deployment
 
 1. Create a `heimdizzy.yml` configuration file:
 
@@ -49,7 +70,7 @@ deployments:
           repository: my-service
 ```
 
-2. Deploy your service:
+2. Deploy your service manually:
 
 ```bash
 heimdizzy deploy staging

@@ -27,6 +27,7 @@ export const BuildConfigSchema = z.object({
   dockerfile: z.string().describe('Path to Dockerfile relative to service root'),
   target: z.string().optional().describe('Docker build target stage'),
   platform: z.enum(['x86_64', 'arm64']).default('x86_64'),
+  runtime: z.enum(['rust', 'nodejs', 'python', 'go']).optional().describe('Service runtime language'),
   binaryName: z.string().default('lambda'),
   features: z.array(z.string()).optional(),
   useDocker: z.boolean().default(true).describe('Build using Docker container'),
@@ -68,7 +69,9 @@ export const ContainerDeploymentConfigSchema = z.object({
     tag: z.string().default('latest').describe('Container image tag'),
     insecure: z.boolean().default(false).describe('Use insecure registry'),
     nodePort: z.number().optional().describe('NodePort for in-cluster registry push (defaults to auto-discovery)'),
-    namespace: z.string().default('container-registry').describe('Namespace where container registry is deployed')
+    namespace: z.string().default('container-registry').describe('Namespace where container registry is deployed'),
+    username: z.string().optional().describe('Registry username for authentication'),
+    password: z.string().optional().describe('Registry password for authentication')
   }),
   kubernetes: z.object({
     namespace: z.string().describe('Kubernetes namespace (required - no default)'),
@@ -185,7 +188,5 @@ export type SqlxConfig = z.infer<typeof SqlxConfigSchema>
 export type BuildConfig = z.infer<typeof BuildConfigSchema>
 export type DeploymentConfig = z.infer<typeof DeploymentSchema>
 export type WebDeploymentConfig = z.infer<typeof WebDeploymentConfigSchema>
-export type NpmDeploymentConfig = z.infer<typeof NpmDeploymentConfigSchema>
-export type DockerHubDeploymentConfig = z.infer<typeof DockerHubDeploymentConfigSchema>
 export type Hook = z.infer<typeof HookSchema>
 export type Hooks = z.infer<typeof HooksSchema>

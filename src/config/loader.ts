@@ -70,11 +70,15 @@ export class ConfigLoader {
   }
   
   private expandEnvironmentVariables(content: string): string {
-    return content.replace(/\$\{([^}]+)\}/g, (match, varName) => {
+    return content.replace(/\$\{([^}]+)\}/g, (match, expression) => {
+      // Handle ${VAR:-default} syntax
+      const parts = expression.split(':-')
+      const varName = parts[0].trim()
+      const defaultValue = parts[1] ? parts[1].trim() : ''
+      
       const value = process.env[varName]
       if (value === undefined) {
-        console.warn(`Warning: Environment variable ${varName} is not set`)
-        return ''
+        return defaultValue
       }
       return value
     })

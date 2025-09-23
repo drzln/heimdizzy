@@ -3,6 +3,7 @@ import chalk from 'chalk'
 import * as fs from 'fs'
 import * as path from 'path'
 import { ServiceDeploymentConfig } from '../config/schema.js'
+import { RustBuildService } from './rust-build.js'
 
 export interface ServiceDeploymentResult {
   imageName: string
@@ -17,6 +18,8 @@ export interface ServiceDeploymentResult {
 }
 
 export class ServiceDeploymentService {
+  private rustBuildService = new RustBuildService()
+  
   async deploy(
     service: any,
     deployment: ServiceDeploymentConfig,
@@ -61,15 +64,20 @@ export class ServiceDeploymentService {
     try {
       // Step 1: Build Docker image
       console.log(chalk.gray('📦 Building Docker image...'))
-      const dockerfile = deploymentConfig?.build?.dockerfile || 'Dockerfile.staging.deploy'
-      const buildArgs = [
-        `--build-arg GIT_SHA=${gitHash}`,
-        `--build-arg BUILD_TIMESTAMP=${timestamp}`,
-      ].join(' ')
+      const dockerfile = deploymentConfig?.build?.dockerfile || 'Dockerfile'
       
-      execSync(`docker build -f ${dockerfile} ${buildArgs} -t ${service.name}:${imageTag} .`, {
-        stdio: 'inherit'
-      })
+      const gitSha = gitHash || 'unknown'
+      const buildTimestamp = timestamp
+      
+      await this.rustBuildService.buildDockerImage(
+        service.name,
+        imageTag,
+        dockerfile,
+        {
+          GIT_SHA: gitSha,
+          BUILD_TIMESTAMP: buildTimestamp
+        }
+      )
       
       // Tag for registry
       console.log(chalk.gray(`🏷️  Tagging image for registry: ${fullImageName}`))
@@ -113,9 +121,9 @@ export class ServiceDeploymentService {
         jobName,
         fullImageName,
         namespace,
-        gitHash,
-        timestamp,
-        kubernetes.env
+        gitSha,
+        buildTimestamp,
+        kubernetes.env || []
       )
       
       if (!migrationResult) {
@@ -140,7 +148,7 @@ export class ServiceDeploymentService {
       
       // Step 5: Verify health check
       console.log(chalk.gray('🏥 Verifying service health...'))
-      const healthResult = await this.verifyHealth(service.name, namespace, gitHash, timestamp)
+      const healthResult = await this.verifyHealth(service.name, namespace, gitSha, buildTimestamp)
       
       if (!healthResult) {
         throw new Error('Health check verification failed')
@@ -164,8 +172,8 @@ export class ServiceDeploymentService {
         healthCheckPassed: true,
         podCount: podCount,
         namespace: namespace,
-        gitHash: gitHash,
-        buildTimestamp: timestamp
+        gitHash: gitSha,
+        buildTimestamp: buildTimestamp
       }
       
     } catch (error: any) {

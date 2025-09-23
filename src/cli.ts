@@ -166,7 +166,7 @@ program
       
       // Send deployment type specific notification
       if (!options.dryRun) {
-        if (deploymentConfig.deployment.type === 'lambda-zip') {
+        if (deploymentConfig.deployment.type === 'service') {
           await notify('podsRestarting', `Restarting pods for ${config.service.name}`)
         } else if (deploymentConfig.deployment.type === 'web') {
           await notify('webDeploying', `Deploying web assets for ${config.service.name}`)

@@ -1,6 +1,10 @@
 # Making Any Service Deployable with Heimdizzy
 
-To make any service deployable, you only need 2 files:
+**Note: Heimdizzy is now primarily used through GitHub Actions workflows. For new services, use the GitHub Actions template instead of manual deployment.**
+
+For GitHub Actions deployment, see: [GitHub Actions Setup Guide](../../../.github/README.md)
+
+For legacy manual deployment, you need 2 files:
 
 ## 1. `heimdizzy.yml` (Required)
 
@@ -79,7 +83,23 @@ npm install heimdizzy
 
 ## Usage
 
-Once set up, you can deploy with:
+### Recommended: GitHub Actions (Automated)
+
+1. **Set up GitHub Actions workflow** using the template:
+   ```bash
+   cp .github/workflows/service-deploy-template.yml \
+      .github/workflows/your-service-deploy.yml
+   ```
+
+2. **Push code to trigger deployment:**
+   ```bash
+   git push origin main      # → Production
+   git push origin develop   # → Staging
+   ```
+
+### Legacy: Manual CLI Deployment
+
+Once set up, you can deploy manually with:
 
 ```bash
 # Via npm scripts
@@ -89,6 +109,8 @@ npm run deploy:yourproduct:staging
 # Or directly 
 npx heimdizzy deploy staging --product myproduct
 ```
+
+**Note: Manual deployment is primarily for debugging. Use GitHub Actions for production deployments.**
 
 ## Features
 
