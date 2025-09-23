@@ -5,6 +5,7 @@ import { ContainerDeploymentService, ContainerDeploymentResult } from './contain
 import { GitOpsContainerDeploymentService, GitOpsContainerDeploymentResult } from './gitops-container-deployment.js'
 import { NpmDeploymentService } from './npm-deployment.js'
 import { DockerHubDeploymentService } from './dockerhub-deployment.js'
+import { ServiceDeploymentService, ServiceDeploymentResult } from './service-deployment.js'
 import { HooksService } from './hooks.js'
 import { Hooks } from '../config/schema.js'
 
@@ -31,6 +32,7 @@ export interface DeploymentResult {
     pushed: boolean
     imageName: string
   }
+  service?: ServiceDeploymentResult
 }
 
 export class DeploymentService {
@@ -39,6 +41,7 @@ export class DeploymentService {
   private gitOpsContainerDeploymentService = new GitOpsContainerDeploymentService()
   private npmDeploymentService = new NpmDeploymentService()
   private dockerHubDeploymentService = new DockerHubDeploymentService()
+  private serviceDeploymentService = new ServiceDeploymentService()
   private hooksService = new HooksService()
 
   async deploy(
